@@ -138,7 +138,7 @@ for schema_name in schema_names:
         .load()
 
     # Show the fetched Table Columns DataFrame
-    tables_columns_df.show()
+    #tables_columns_df.show()
 
     # Check if the combination of table_mstr_key and column_name exists in field_master table
     for row in tables_columns_df.collect():
@@ -177,17 +177,21 @@ for schema_name in schema_names:
                 .save()
             
             # Get the new data_type_mstr_key
-            data_type_mstr_key = spark.read \
+            data_type_mstr_key_df = spark.read \
                 .format("jdbc") \
                 .option("url", mysql_url) \
                 .option("dbtable", "data_type_master") \
                 .option("user", mysql_user) \
                 .option("password", mysql_password) \
                 .option("driver", mysql_driver) \
-                .load().filter(col("data_type") == data_type).select("data_type_mstr_key").collect()[0]["data_type_mstr_key"]
+                .load().filter(col("data_type") == data_type).select("data_type_mstr_key")
+            data_type_mstr_key_df.persist()
+            data_type_mstr_key = data_type_mstr_key_df.collect()[0]["data_type_mstr_key"]
         else:
             # Get the existing data_type_mstr_key
-            data_type_mstr_key = data_type_df.select("data_type_mstr_key").collect()[0]["data_type_mstr_key"]
+            data_type_mstr_key_df = data_type_df.select("data_type_mstr_key")
+            data_type_mstr_key_df.persist()
+            data_type_mstr_key = data_type_mstr_key_df.collect()[0]["data_type_mstr_key"]
         
         # Check if the combination already exists in field_master table
         existing_field_df = spark.read \
@@ -198,6 +202,7 @@ for schema_name in schema_names:
             .option("password", mysql_password) \
             .option("driver", mysql_driver) \
             .load().filter((col("table_mstr_key") == table_mstr_key) & (col("field_name") == column_name))
+        existing_field_df.persist()
 
         if existing_field_df.count() == 0:
             # Define schema for the DataFrame
