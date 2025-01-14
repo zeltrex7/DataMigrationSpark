@@ -21,12 +21,14 @@ action VARCHAR(250),
 creation_date DATETIME NOT NULL,
 PRIMARY KEY(table_mstr_key , version , table_name)
 );
-
+DROP TABLE IF exists mysql_source.field_master;
 CREATE TABLE IF NOT EXISTS mysql_source.field_master(
 field_mstr_key INT AUTO_INCREMENT,
+table_mstr_key INT NOT NULL,
 version INT NOT NULL,
 field_name VARCHAR(250)  NOT NULL,
 data_type_mstr_key INT NOT NULL,
+max_length INT,
 is_active BOOLEAN NOT NULL,
 action VARCHAR(250),
 creation_date DATETIME NOT NULL,
@@ -42,4 +44,5 @@ action VARCHAR(250),
 creation_date DATETIME NOT NULL,
 PRIMARY KEY(data_type_mstr_key , version , data_type)
 );
+
 
