@@ -3,7 +3,13 @@ from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
 from dotenv import load_dotenv
 from pyspark.sql.functions import col
+import time
 
+print("Starting the Metadata Ingestion Job...")
+
+
+# Record the start time
+start_time = time.time()
 # Load environment variables from .env file
 load_dotenv()
 
@@ -56,6 +62,7 @@ df = spark.read \
 
 schema_names = df.select("schema_name").rdd.flatMap(lambda x: x).collect()
 
+print("Collecting Meta data into MySQL table...")
 
 for schema_name in schema_names:
     # Load MySQL information schema tables into Spark DataFrame
@@ -226,3 +233,12 @@ for schema_name in schema_names:
                 .option("driver", mysql_driver) \
                 .mode("append") \
                 .save()
+
+# Record the end time
+end_time = time.time()
+
+# Calculate the duration
+duration = round(end_time - start_time, 2)
+print("=========================================")
+print(f"Job completed in {duration} seconds")
+print("=========================================")
