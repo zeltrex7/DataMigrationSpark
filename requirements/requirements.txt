@@ -62,3 +62,7 @@ traitlets==5.8.0
     #   matplotlib-inline
 wcwidth==0.2.5
     # via prompt-toolkit
+sqlalchemy==1.4.31
+    # via pyspark
+pymssql==2.1.5
+    # via pyspark   

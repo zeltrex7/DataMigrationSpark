@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from pyspark.sql.functions import col
 import time
 
-print("Starting the Metadata Ingestion Job...")
+print("\nStarting the Metadata Ingestion Job...")
 
 
 # Record the start time
@@ -23,7 +23,7 @@ mysql_driver = os.getenv("MYSQL_DRIVER")
 
 # Initialize Spark session
 spark = SparkSession.builder \
-    .appName("MySQL to Spark DF with .env") \
+    .appName("MetaData Extraction") \
     .config("spark.jars", "/opt/spark/apps/jars/mysql-connector-java-8.0.30.jar") \
     .getOrCreate()
 
@@ -238,7 +238,7 @@ for schema_name in schema_names:
 end_time = time.time()
 
 # Calculate the duration
-duration = round(end_time - start_time, 2)
-print("=========================================")
-print(f"Job completed in {duration} seconds")
-print("=========================================")
+duration = round((end_time - start_time)/60, 2)
+print("===========================================")
+print(f"Job completed in {duration} minutes.")
+print("===========================================")
