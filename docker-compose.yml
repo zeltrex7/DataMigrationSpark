@@ -13,7 +13,7 @@ services:
       retries: 3
     volumes:
       - ./spark_apps:/opt/spark/apps
-      - spark-logs:/opt/spark/spark-events
+      - ./spark-logs:/opt/spark/spark-events
     env_file:
       - .env.spark
     ports:
@@ -44,7 +44,7 @@ services:
       - .env.spark
     volumes:
       - ./spark_apps:/opt/spark/apps
-      - spark-logs:/opt/spark/spark-events
+      - ./spark-logs:/opt/spark/spark-events
 
 volumes:
   spark-logs:

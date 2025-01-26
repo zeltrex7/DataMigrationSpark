@@ -2,7 +2,7 @@ import os
 from pyspark.sql import SparkSession
 from dotenv import load_dotenv
 import time
-from sqlalchemy import create_engine, text
+from MSSQLUtilityFunction import execute_query
 
 print("\nStarting the Data Migration Job...")
 
@@ -60,24 +60,16 @@ schema_list = df = spark.read \
                     .option("driver", mysql_driver) \
                     .load().select("schema_name")
 
-sqlserver_connection_url = f"mssql+pymssql://{sqlserver_user}:{sqlserver_password}@{sqlserver_host}:{sqlserver_port}"
-# Create an SQLAlchemy engine
-engine = create_engine(sqlserver_connection_url, isolation_level="AUTOCOMMIT")
+
 
 # Iterate over the schema list
 for row in schema_list.collect():
     schema_name = row['schema_name']
 
     # SQL query to create a new database
-    create_db_query = text(f"CREATE DATABASE {schema_name};")
-    try:
-        # Establish connection and execute the query
-        with engine.connect() as connection:
-            connection.execute(create_db_query)
-            print(f"Database '{schema_name}' created successfully.")
-
-    except Exception as e:
-        print(f"Database '{schema_name} already exists': {e}")
+    query = f"CREATE DATABASE {schema_name};"
+    
+    execute_query(query)
     
     
     # Example DataFrame to insert
@@ -106,9 +98,30 @@ for row in schema_list.collect():
             .option("password", mysql_password) \
             .option("driver", mysql_driver) \
             .load()
+        
+        query = f"""SELECT  CONCAT('CREATE TABLE ', sm.schema_name , '.','dbo','.', tm.table_name ,'('
+				            ,GROUP_CONCAT(CONCAT(fm.field_name,' ', dtm.data_type , IF(fm.max_length IS NOT NULL, CONCAT(' (',  fm.max_length , ') '),''))),
+                            ');') as create_ddl
+                    FROM mysql_source.table_master tm
+                    INNER JOIN mysql_source.schema_master sm ON sm.schema_mstr_key = tm.schema_mstr_key AND sm.is_active = 1
+                    INNER JOIN mysql_source.field_master fm ON fm.table_mstr_key = tm.table_mstr_key AND fm.is_active = 1
+                    INNER JOIN mysql_source.data_type_master dtm ON dtm.data_type_mstr_key = fm.data_type_mstr_key AND dtm.is_active = 1
+                    WHERE tm.is_active AND sm.schema_name = '{schema_name}' AND tm.table_name = '{table_name}' """
+        
 
+        #read data
+        query = table_ddl_for_mssql_server = spark.read \
+            .format("jdbc") \
+            .option("url", mysql_url) \
+            .option("query", query) \
+            .option("user", mysql_user) \
+            .option("password", mysql_password) \
+            .option("driver", mysql_driver) \
+            .load().select("create_ddl").collect()[0]["create_ddl"]
+        execute_query(query)
+        
         df.write \
-            .mode("overwrite") \
+            .mode("append") \
             .jdbc(sqlserver_url, f"{schema_name}.dbo.{table_name}", properties=sqlserver_properties) 
 
 
