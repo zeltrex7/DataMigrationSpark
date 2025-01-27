@@ -12,6 +12,9 @@ start_time = time.time()
 # Load environment variables from .env file
 load_dotenv()
 
+source_db_name = "mysql"
+target_db_name = "mssql"
+
 # Get SQL Server credentials from .env
 sqlserver_host = os.getenv("SQLSERVER_HOSTNAME")
 sqlserver_port = os.getenv("SQLSERVER_PORT")
@@ -100,13 +103,17 @@ for row in schema_list.collect():
             .load()
         
         query = f"""SELECT  CONCAT('CREATE TABLE ', sm.schema_name , '.','dbo','.', tm.table_name ,'('
-				            ,GROUP_CONCAT(CONCAT(fm.field_name,' ', dtm.data_type , IF(fm.max_length IS NOT NULL, CONCAT(' (',  fm.max_length , ') '),''))),
-                            ');') as create_ddl
-                    FROM mysql_source.table_master tm
-                    INNER JOIN mysql_source.schema_master sm ON sm.schema_mstr_key = tm.schema_mstr_key AND sm.is_active = 1
+                    		,GROUP_CONCAT(CONCAT(fm.field_name,' ', IF(dtm2.data_type IS NULL ,dtm.data_type,dtm2.data_type) , IF(fm.max_length IS NOT NULL, CONCAT(' (',  fm.max_length , ') '),''))),
+		                    ');') as create_ddl
+                    FROM mysql_source.db_type_master dbtm1
+                    INNER JOIN mysql_source.schema_master sm ON sm.db_type_mstr_key = dbtm1.db_type_mstr_key AND sm.is_active = 1 
+                    INNER JOIN mysql_source.table_master tm ON sm.schema_mstr_key = tm.schema_mstr_key AND tm.is_active = 1
                     INNER JOIN mysql_source.field_master fm ON fm.table_mstr_key = tm.table_mstr_key AND fm.is_active = 1
                     INNER JOIN mysql_source.data_type_master dtm ON dtm.data_type_mstr_key = fm.data_type_mstr_key AND dtm.is_active = 1
-                    WHERE tm.is_active AND sm.schema_name = '{schema_name}' AND tm.table_name = '{table_name}' """
+                    LEFT JOIN mysql_source.data_type_db_casting_master dtdcm1 ON dtdcm1.source_db_mstr_key = dbtm1.db_type_mstr_key AND dtdcm1.source_data_type_mstr_key = dtm.data_type_mstr_key AND dtdcm1.is_active = 1
+                    LEFT JOIN mysql_source.data_type_master dtm2 ON dtm2.data_type_mstr_key = dtdcm1.target_data_type_mstr_key AND dtm2.is_active = 1
+                    LEFT JOIN mysql_source.db_type_master dbtm2 ON dbtm2.db_type_mstr_key = dtdcm1.target_db_mstr_key AND dbtm2.is_active =1 AND  dbtm2.db_name = '{target_db_name}'
+                    WHERE dbtm1.is_active AND sm.schema_name = '{schema_name}' AND tm.table_name = '{table_name}' AND dbtm1.db_name= '{source_db_name}' """
         
 
         #read data

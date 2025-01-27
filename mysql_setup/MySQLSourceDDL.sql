@@ -1,14 +1,16 @@
 CREATE DATABASE IF NOT EXISTS mysql_source;
 USE mysql_source;
 
+DROP TABLE IF  EXISTS mysql_source.schema_master;
 CREATE TABLE IF NOT EXISTS mysql_source.schema_master(
 schema_mstr_key INT AUTO_INCREMENT ,
 version INT NOT NULL,
+db_type_mstr_key INT NOT NULL,
 schema_name VARCHAR(250)  NOT NULL,
 is_active BOOLEAN NOT NULL,
 action VARCHAR(250),
 creation_date DATETIME NOT NULL,
-PRIMARY KEY(schema_mstr_key , version , schema_name)
+PRIMARY KEY(schema_mstr_key , version , db_type_mstr_key ,schema_name)
 );
 
 CREATE TABLE IF NOT EXISTS mysql_source.table_master(
@@ -43,6 +45,32 @@ is_active BOOLEAN NOT NULL,
 action VARCHAR(250),
 creation_date DATETIME NOT NULL,
 PRIMARY KEY(data_type_mstr_key , version , data_type)
+);
+
+
+DROP TABLE IF EXISTS mysql_source.db_type_master;
+CREATE TABLE IF NOT EXISTS mysql_source.db_type_master(
+db_type_mstr_key INT AUTO_INCREMENT,
+version INT NOT NULL,
+db_name VARCHAR(250) NOT NULL,
+is_active BOOLEAN NOT NULL,
+action VARCHAR(250),
+creation_date DATETIME NOT NULL,
+PRIMARY KEY(db_type_mstr_key , version , db_name)
+);
+
+DROP TABLE IF EXISTS mysql_source.data_type_db_casting_master;
+CREATE TABLE IF NOT EXISTS mysql_source.data_type_db_casting_master(
+data_type_db_casting_mstr_key INT AUTO_INCREMENT ,
+version INT NOT NULL,
+source_db_mstr_key VARCHAR(250) NOT NULL,
+source_data_type_mstr_key VARCHAR(250)  NOT NULL,
+target_db_mstr_key VARCHAR(250) NOT NULL,
+target_data_type_mstr_key VARCHAR(250)  NOT NULL,
+is_active BOOLEAN NOT NULL,
+action VARCHAR(250),
+creation_date DATETIME NOT NULL,
+PRIMARY KEY(data_type_db_casting_mstr_key , version , source_data_type_mstr_key, target_data_type_mstr_key)
 );
 
 

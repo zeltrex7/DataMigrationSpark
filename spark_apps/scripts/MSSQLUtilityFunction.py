@@ -23,7 +23,7 @@ def execute_query(query):
         # Establish connection and execute the query
         with engine.connect() as connection:
             connection.execute(query)
-            print("Query executed successfully.")
+            #print("Query executed successfully.")
 
     except Exception as e:
         print(f"Query execution failed :\n '{query}' \n:  {e}")

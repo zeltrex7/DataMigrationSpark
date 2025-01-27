@@ -1,7 +1,7 @@
 DELIMITER $$
-DROP  TRIGGER IF EXISTS set_defaults_on_insert_table_master;
-CREATE TRIGGER set_defaults_on_insert_table_master
-BEFORE INSERT ON table_master
+DROP TRIGGER IF EXISTS set_defaults_on_insert_schema_master;
+CREATE TRIGGER set_defaults_on_insert_schema_master
+BEFORE INSERT ON schema_master
 FOR EACH ROW
 BEGIN
     -- Set action to 'i' if it's not provided
