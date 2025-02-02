@@ -74,3 +74,27 @@ PRIMARY KEY(data_type_db_casting_mstr_key , version , source_data_type_mstr_key,
 );
 
 
+DROP TABLE IF EXISTS mysql_source.exclusion_rule_type_master;
+CREATE TABLE IF NOT EXISTS mysql_source.exclusion_rule_type_master(
+exclusion_rule_type_mstr_key INT AUTO_INCREMENT ,
+version INT NOT NULL,
+exclusion_rule_type VARCHAR(250) NOT NULL,
+is_active BOOLEAN NOT NULL,
+action VARCHAR(250),
+creation_date DATETIME NOT NULL,
+PRIMARY KEY(exclusion_rule_type_mstr_key , version , exclusion_rule_type)
+);
+
+DROP TABLE IF EXISTS mysql_source.exclusion_rule_master;
+CREATE TABLE IF NOT EXISTS mysql_source.exclusion_rule_master(
+exclusion_rule_mstr_key INT AUTO_INCREMENT ,
+version INT NOT NULL,
+exclusion_rule_type_mstr_key INT NOT NULL,
+excluded_entity_mstr_key INT NOT NULL,
+is_active BOOLEAN NOT NULL,
+action VARCHAR(250),
+creation_date DATETIME NOT NULL,
+PRIMARY KEY(exclusion_rule_mstr_key , version , exclusion_rule_type_mstr_key, excluded_entity_mstr_key)
+);
+
+
