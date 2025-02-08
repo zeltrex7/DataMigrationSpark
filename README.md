@@ -124,9 +124,6 @@ docker compose logs -f
 4. Push to branch
 5. Create Pull Request
 
-## License
-
-[Add your license information here]
 
 ## Running Spark Jobs
 
