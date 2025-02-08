@@ -108,24 +108,17 @@ for row in schema_list.collect():
         .option("driver", mysql_driver) \
         .load()
 
+    
     # Now perform the join with the DataFrame
-    tables_list = tables_list.join(exclusion_df, 
-                    (col("table_mstr_key") != col("excluded_entity_mstr_key")) & 
-                    (col('exclusion_rule_type_mstr_key') == 1) & 
-                    (col('is_active') == 1),
-                    how="inner")
+    tables_list = tables_list.join(
+    exclusion_df,
+    tables_list["table_mstr_key"] == exclusion_df["excluded_entity_mstr_key"],
+    how="left_anti")
+
+    #print(tables_list.show())
 
     for row in tables_list.collect():
         table_name = row['table_name']
-        # Load MySQL table into Spark DataFrame
-        df = spark.read \
-            .format("jdbc") \
-            .option("url", mysql_url) \
-            .option("dbtable", f"{schema_name}.{table_name}") \
-            .option("user", mysql_user) \
-            .option("password", mysql_password) \
-            .option("driver", mysql_driver) \
-            .load()
 
         
         
@@ -141,7 +134,7 @@ for row in schema_list.collect():
                         LEFT JOIN mysql_source.data_type_master dtm ON dtm.data_type_mstr_key =  erm.excluded_entity_mstr_key AND dtm.is_active = 1
                         WHERE erm.is_active = 1)temp
                         GROUP BY temp.exclusion_rule_type_mstr_key)
-                    SELECT  CONCAT('CREATE TABLE ', sm.schema_name , '.','dbo','.', tm.table_name ,'('
+                    SELECT  GROUP_CONCAT(fm.field_name) AS mysql_fields, CONCAT('CREATE TABLE ', sm.schema_name , '.','dbo','.', tm.table_name ,'('
                     		,GROUP_CONCAT(CONCAT(fm.field_name,' ', IF(dtm2.data_type IS NULL ,dtm.data_type,dtm2.data_type) , IF(fm.max_length IS NOT NULL, CONCAT(' (',  fm.max_length , ') '),''))),
 		                    ');') as create_ddl
                     FROM mysql_source.db_type_master dbtm1
@@ -155,9 +148,11 @@ for row in schema_list.collect():
                     WHERE dbtm1.is_active AND sm.schema_name = '{schema_name}' AND tm.table_name = '{table_name}' AND dbtm1.db_name= '{source_db_name}' 
                     AND dtm.data_type_mstr_key NOT IN (SELECT entity_mstr_key FROM exclusion_entity WHERE exclusion_rule_type_mstr_key = 3)
                     AND dtm2.data_type_mstr_key NOT IN (SELECT entity_mstr_key FROM exclusion_entity WHERE exclusion_rule_type_mstr_key = 3)
-                    AND fm.field_name NOT IN (SELECT entity_mstr_key FROM exclusion_entity WHERE exclusion_rule_type_mstr_key = 2)"""
+                    AND fm.field_mstr_key NOT IN (SELECT entity_mstr_key FROM exclusion_entity WHERE exclusion_rule_type_mstr_key = 2)"""
         
 
+        
+        
         #read data
         query = table_ddl_for_mssql_server = spark.read \
             .format("jdbc") \
@@ -166,9 +161,19 @@ for row in schema_list.collect():
             .option("user", mysql_user) \
             .option("password", mysql_password) \
             .option("driver", mysql_driver) \
-            .load().select("create_ddl").collect()[0]["create_ddl"]
+            .load().select(["create_ddl","mysql_fields"])
+        #print(query.show())
+        # Load MySQL table into Spark DataFrame
+        df = spark.read \
+            .format("jdbc") \
+            .option("url", mysql_url) \
+            .option("dbtable", f"{schema_name}.{table_name}") \
+            .option("user", mysql_user) \
+            .option("password", mysql_password) \
+            .option("driver", mysql_driver) \
+            .load().select(query.collect()[0]["mysql_fields"].split(","))
         
-        execute_query(query)
+        execute_query(query.collect()[0]["create_ddl"])
         
         # Write data to SQL Server
         df.write \
