@@ -26,13 +26,21 @@ This project sets up a data migration pipeline using Apache Spark and Apache Air
     git clone https://github.com/your-repo/data-migration-spark.git
     cd data-migration-spark
     ```
+2. Spin up the containers:
+```bash
+# Restart all services
+docker compose -p spark up -d --scale spark-worker=5
+cd airflow
+docker compose -p airflow up -d 
 
-2. Install the required Python packages:
+```
+
+3. Install the required Python packages:
     ```sh
-    pip install pyspark python-dotenv
+    pip install pyspark python-dotenv pymssql
     ```
 
-3. Create a `.env` file in the root directory of the project and add your MySQL credentials:
+4. Create a `.env` file in the root directory of the project and add your MySQL credentials:
     ```env
     MYSQL_HOSTNAME=your_mysql_host
     MYSQL_PORT=your_mysql_port
@@ -42,9 +50,9 @@ This project sets up a data migration pipeline using Apache Spark and Apache Air
     MYSQL_DRIVER=com.mysql.cj.jdbc.Driver
     ```
 
-4. Place the MySQL JDBC driver (`mysql-connector-java-8.0.30.jar`) in the appropriate directory (`/opt/spark/apps/jars/`).
+5. Place the MySQL JDBC driver (`mysql-connector-java-8.0.30.jar`) in the appropriate directory (`/opt/spark/apps/jars/`).
 
-5. Configure logging by creating a `log4j.properties` file at `/opt/spark/conf/` with the following content:
+6. Configure logging by creating a `log4j.properties` file at `/opt/spark/conf/` with the following content:
     ```properties
     # filepath: /opt/spark/conf/log4j.properties
     log4j.rootCategory=ERROR, console
@@ -61,7 +69,7 @@ To run the data ingestion script, execute the following command:
 spark-submit --jars /opt/spark/apps/jars/mysql-connector-java-8.0.30.jar /path/to/DataIngestion.py
 ```
 
-5. **Verify services**
+7. **Verify services**
 - Spark Master UI: http://localhost:8081
 - Airflow UI: http://localhost:8080
   - Username: admin
@@ -74,55 +82,6 @@ spark-submit --jars /opt/spark/apps/jars/mysql-connector-java-8.0.30.jar /path/t
 - **Airflow**: Orchestrates data pipeline
 - **MySQL**: Source database
 - **SQL Server**: Target database
-
-## Troubleshooting
-
-1. **If containers fail to start:**
-```bash
-# Restart all services
-docker compose down -v
-docker compose up -d
-```
-
-2. **If Airflow UI is not accessible:**
-```bash
-# Restart Airflow container
-docker compose restart airflow
-```
-
-3. **To check Spark workers:**
-```bash
-# View all running containers
-docker ps
-
-# Check specific worker logs
-docker logs <worker-container-id>
-```
-
-## Maintenance
-
-- **Stop all services**
-```bash
-docker compose down
-```
-
-- **Clean up volumes**
-```bash
-docker compose down -v
-```
-
-- **View logs**
-```bash
-docker compose logs -f
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
 
 
 ## Running Spark Jobs
