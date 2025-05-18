@@ -66,7 +66,7 @@ def get_schema_list(spark, config, urls):
         .option("lowerBound", "1") \
         .option("upperBound", "1000") \
         .load() \
-        .select("schema_name") \
+        .select(["schema_name" , "complete_refresh"]) \
         .cache()
 
 def get_tables_list(spark, config, urls, schema_name):
@@ -175,6 +175,13 @@ def main():
     
     for row in schema_list.collect():
         schema_name = row['schema_name']
+        if row['complete_refresh'] == 1:
+            execute_query(f"""USE master;
+                            ALTER DATABASE {schema_name} SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                            DROP DATABASE IF EXISTS {schema_name};""")
+            print(f"Schema {schema_name} is marked for complete refresh. Dropping existing database.")
+        else:
+            print(f"Schema {schema_name} is not marked for complete refresh. Proceeding with migration.")
         execute_query(f"CREATE DATABASE {schema_name};")
         
         tables_list = get_tables_list(spark, config, urls, schema_name)

@@ -7,6 +7,7 @@ schema_mstr_key INT AUTO_INCREMENT ,
 version INT NOT NULL,
 db_type_mstr_key INT NOT NULL,
 schema_name VARCHAR(250)  NOT NULL,
+complete_refresh BOOLEAN DEFAULT FALSE NOT NULL,
 is_active BOOLEAN NOT NULL,
 action VARCHAR(250),
 creation_date DATETIME NOT NULL,
@@ -23,6 +24,7 @@ action VARCHAR(250),
 creation_date DATETIME NOT NULL,
 PRIMARY KEY(table_mstr_key , version , table_name)
 );
+
 DROP TABLE IF exists mysql_source.field_master;
 CREATE TABLE IF NOT EXISTS mysql_source.field_master(
 field_mstr_key INT AUTO_INCREMENT,
